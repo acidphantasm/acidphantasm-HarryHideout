@@ -84,7 +84,7 @@ class SampleTrader implements IPreAkiLoadMod, IPostDBLoadMod
         // Add new trader to the trader dictionary in DatabaseServer - has no assorts (items) yet
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
 
-        // Add milk
+        // Add nuts
         const NUTS_ID = "57347c77245977448d35f6e2"; // Can find item ids in `database\templates\items.json` or with https://db.sp-tarkov.com/search
         this.fluentAssortCreator.createSingleAssortItem(NUTS_ID)
                                     .addStackCount(12)
