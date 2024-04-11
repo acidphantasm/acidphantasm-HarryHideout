@@ -14,7 +14,6 @@ import { IRagfairConfig } from "@spt-aki/models/spt/config/IRagfairConfig";
 import { JsonUtil } from "@spt-aki/utils/JsonUtil";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import * as items from "../config/items.json";
 
 // New trader settings
 import * as baseJson from "../db/base.json";
@@ -30,7 +29,9 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
     private logger: ILogger
     private traderHelper: TraderHelper
     private fluentAssortCreator: FluentAssortCreator
+    private static config: Config;
     private static itemsPath = path.resolve(__dirname, "../config/items.json");
+    private static configPath = path.resolve(__dirname, "../config/config.json");
 
     constructor() {
         this.mod = "acidphantasm-HarryHideout"; // Set name of mod so we can log it to console later
@@ -57,7 +58,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         // Create helper class and use it to register our traders image/icon + set its stock refresh time
         this.traderHelper = new TraderHelper();
         this.fluentAssortCreator = new FluentAssortCreator(hashUtil, this.logger);
-        this.traderHelper.registerProfileImage(baseJson, this.mod, preAkiModLoader, imageRouter, "cat.jpg");
+        this.traderHelper.registerProfileImage(baseJson, this.mod, preAkiModLoader, imageRouter, "harry.jpg");
         this.traderHelper.setTraderUpdateTime(traderConfig, baseJson, 3600, 4000);
 
         // Add trader to trader enum
@@ -75,6 +76,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
      */
     public postDBLoad(container: DependencyContainer): void
     {
+        HideoutHarry.config = JSON.parse(fs.readFileSync(HideoutHarry.configPath, "utf-8"));
         this.logger.debug(`[${this.mod}] postDb Loading... `);
 
         // Resolve SPT classes we'll use
@@ -92,98 +94,103 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         // Add new trader to the trader dictionary in DatabaseServer - has no assorts (items) yet
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
 
-        this.fluentAssortCreator.createSingleAssortItem("569668774bdc2da2298b4568") // "euros"
-                                    .addUnlimitedStackCount()
-                                    .addMoneyCost(Money.ROUBLES, 2000)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-
-        this.fluentAssortCreator.createSingleAssortItem("5696686a4bdc2da3298b456a") // "dollars"
-                                    .addUnlimitedStackCount()
-                                    .addMoneyCost(Money.ROUBLES, 2000)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-/*
-        const classicMatches = "57347b8b24597737dd42e192";
-        this.fluentAssortCreator.createSingleAssortItem(classicMatches) // "classic matches"
-                                    .addUnlimitedStackCount()
-                                    .addMoneyCost(Money.ROUBLES, priceTable[classicMatches])
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-
-        this.fluentAssortCreator.createSingleAssortItem("590c2c9c86f774245b1f03f2") // "mtape"
-                                    .addUnlimitedStackCount()
-                                    .addMoneyCost(Money.ROUBLES, 2000)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-
-*/      let test: Record<string, number>;
-        /// This section generates basic items with Rouble price only
-        if (fs.existsSync(HideoutHarry.itemsPath))
+        /// This section generates currency items for trader
+        const itemIDs = JSON.parse(fs.readFileSync(HideoutHarry.itemsPath, "utf-8"));
+        for (const itemId in itemIDs)
             {
-                logger.log("itemJSON exists!", "cyan");
-                const itemIDs = JSON.parse(fs.readFileSync(HideoutHarry.itemsPath, "utf-8"));
-                logger.log(itemIDs, "cyan");
-                for (const itemId in itemIDs)
+                if (HideoutHarry.config.useFleaPrices)
                     {
-                        let price = priceTable[itemId]
+                        let price = Math.round(priceTable[itemId] * HideoutHarry.config.itemPriceMultiplier);
                         if (!price)
                             {
-                                price = handbookTable.Items.find(x => x.Id === itemId)?.Price ?? 1;
+                                price = Math.round((handbookTable.Items.find(x => x.Id === itemId)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier);
                             }
-                        logger.log("ItemID: " +itemId+ " for price: "+ price, "cyan");
                         this.fluentAssortCreator.createSingleAssortItem(itemId)
                         .addUnlimitedStackCount()
                         .addMoneyCost(Money.ROUBLES, price)
                         .addLoyaltyLevel(1)
                         .export(tables.traders[baseJson._id]);
-                        logger.log("Price acquired for "+itemId+", added to trader for "+price, "cyan");
                     }
+                else  
+                {
+                    let price = itemIDs[itemId]
+                    this.fluentAssortCreator.createSingleAssortItem(itemId)
+                    .addUnlimitedStackCount()
+                    .addMoneyCost(Money.ROUBLES, price)
+                    .addLoyaltyLevel(1)
+                    .export(tables.traders[baseJson._id]);
+                }
+            }
+
+
+        /// This section generates barter/rouble for high end items for trader only
+
+        const ledX = "5c0530ee86f774697952d952"; // LEDX
+        const bitcoin = "59faff1d86f7746c51718c9c"; // Add 2x bitcoin as barter for LEDX
+        const currentConverter = "6389c85357baa773a825b356"; // current converter
+        const gpsAmplifier = "6389c7f115805221fb410466"; // GPS Amplifier
+        const militaryBattery = "5d03794386f77420415576f5"; // military battery
+
+        if (HideoutHarry.config.useBarters)
+            {
+                this.fluentAssortCreator.createSingleAssortItem(ledX)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addBarterCost(bitcoin, 3)
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
+                                 
+                this.fluentAssortCreator.createSingleAssortItem(currentConverter)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addBarterCost(bitcoin, 8)
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
+                                 
+                this.fluentAssortCreator.createSingleAssortItem(gpsAmplifier)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addBarterCost(bitcoin, 4)
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
+                this.fluentAssortCreator.createSingleAssortItem(militaryBattery)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addBarterCost(bitcoin, 1)
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
             }
             else 
             {
-                logger.log("acidphantasm-HarryHidout is missing items.json. You have installed the mod incorrectly.", "red");
-            }
-        /// This section generates barter traders only
-                                    
-        const LEDX_ID = "5c0530ee86f774697952d952"; // LEDX
-        const BITCOIN_ID = "59faff1d86f7746c51718c9c"; // Add 2x bitcoin as barter for LEDX
-        this.fluentAssortCreator.createSingleAssortItem(LEDX_ID)
-                                    .addUnlimitedStackCount()
-                                    .addBuyRestriction(1)
-                                    .addBarterCost(BITCOIN_ID, 3)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-                         
-        const CURRENTCONVERTER = "6389c85357baa773a825b356"; // current converter
-        this.fluentAssortCreator.createSingleAssortItem(CURRENTCONVERTER)
-                                    .addUnlimitedStackCount()
-                                    .addBuyRestriction(1)
-                                    .addBarterCost(BITCOIN_ID, 4)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
+                this.fluentAssortCreator.createSingleAssortItem(ledX)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addMoneyCost(Money.ROUBLES, (priceTable[ledX] * HideoutHarry.config.itemPriceMultiplier))
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
+                                 
+                this.fluentAssortCreator.createSingleAssortItem(currentConverter)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addMoneyCost(Money.ROUBLES, (4216850 * HideoutHarry.config.itemPriceMultiplier))
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
+                                 
+                this.fluentAssortCreator.createSingleAssortItem(gpsAmplifier)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addMoneyCost(Money.ROUBLES, (1917850 * HideoutHarry.config.itemPriceMultiplier))
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
 
-        const VPX = "5c05300686f7746dce784e5d"; // vpx
-        this.fluentAssortCreator.createSingleAssortItem(VPX)
-                                    .addUnlimitedStackCount()
-                                    .addBarterCost(BITCOIN_ID, 1)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-                         
-        const GPSAMPLIFIER = "6389c7f115805221fb410466"; // GPS Amplifier
-        this.fluentAssortCreator.createSingleAssortItem(GPSAMPLIFIER)
-                                    .addUnlimitedStackCount()
-                                    .addBuyRestriction(1)
-                                    .addBarterCost(BITCOIN_ID, 4)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
-        const militaryBattery = "5d03794386f77420415576f5"; // military battery
-        this.fluentAssortCreator.createSingleAssortItem(militaryBattery)
-                                    .addUnlimitedStackCount()
-                                    .addBuyRestriction(1)
-                                    .addBarterCost(BITCOIN_ID, 2)
-                                    .addLoyaltyLevel(1)
-                                    .export(tables.traders[baseJson._id]);
+                this.fluentAssortCreator.createSingleAssortItem(militaryBattery)
+                                            .addUnlimitedStackCount()
+                                            .addBuyRestriction(1)
+                                            .addMoneyCost(Money.ROUBLES, (priceTable[militaryBattery] * HideoutHarry.config.itemPriceMultiplier))
+                                            .addLoyaltyLevel(1)
+                                            .export(tables.traders[baseJson._id]);
+            }
+        
 
         // Add trader to locale file, ensures trader text shows properly on screen
         // WARNING: adds the same text to ALL locales (e.g. chinese/french/english)
@@ -191,6 +198,13 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
 
         this.logger.debug(`[${this.mod}] postDb Loaded`);
     }
+}
+
+interface Config 
+{
+    useBarters: boolean,
+    itemPriceMultiplier: number,
+    useFleaPrices: boolean,
 }
 
 module.exports = { mod: new HideoutHarry() }
