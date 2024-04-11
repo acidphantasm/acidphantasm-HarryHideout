@@ -1,6 +1,6 @@
-# Welcome to the SPT-AKI Modding Project
+# Welcome to Harry Hideout by acidphantasm
 
-This project is designed to streamline the initial setup process for building and creating mods in the SPT-AKI environment. Follow this guide to set up your environment efficiently.
+This mod is designed and built to ease constructing and upgrading your hideout pre-flea market. You can continue to use it post-flea as Harry contains all items used in construction & upgrades.
 
 ## **Table of Contents**
 - [NodeJS Setup](#nodejs-setup)
