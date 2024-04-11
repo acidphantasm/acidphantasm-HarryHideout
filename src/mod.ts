@@ -29,7 +29,7 @@ class SampleTrader implements IPreAkiLoadMod, IPostDBLoadMod
     private fluentAssortCreator: FluentAssortCreator
 
     constructor() {
-        this.mod = "13AddTrader"; // Set name of mod so we can log it to console later
+        this.mod = "acidphantasm-HarryHideout"; // Set name of mod so we can log it to console later
     }
 
     /**
@@ -85,21 +85,27 @@ class SampleTrader implements IPreAkiLoadMod, IPostDBLoadMod
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
 
         // Add milk
-        const MILK_ID = "575146b724597720a27126d5"; // Can find item ids in `database\templates\items.json` or with https://db.sp-tarkov.com/search
-        this.fluentAssortCreator.createSingleAssortItem(MILK_ID)
-                                    .addStackCount(200)
-                                    .addBuyRestriction(10)
+        const NUTS_ID = "57347c77245977448d35f6e2"; // Can find item ids in `database\templates\items.json` or with https://db.sp-tarkov.com/search
+        this.fluentAssortCreator.createSingleAssortItem(NUTS_ID)
+                                    .addStackCount(12)
+                                    .addBuyRestriction(12)
                                     .addMoneyCost(Money.ROUBLES, 2000)
                                     .addLoyaltyLevel(1)
                                     .export(tables.traders[baseJson._id]);
 
+        // Add ledx
+        const LEDX_ID = "5c0530ee86f774697952d952"; // Can find item ids in `database\templates\items.json` or with https://db.sp-tarkov.com/search
+        this.fluentAssortCreator.createSingleAssortItem(NUTS_ID)
+                                    .addStackCount(12)
+                                    .addBuyRestriction(12)
+                                    .addMoneyCost(Money.ROUBLES, 2000)
+                                    .addLoyaltyLevel(1)
+                                    .export(tables.traders[baseJson._id]);
         // Add 3x bitcoin + salewa for milk barter
-        const BITCOIN_ID = "59faff1d86f7746c51718c9c"
-        const SALEWA_ID = "544fb45d4bdc2dee738b4568";
-        this.fluentAssortCreator.createSingleAssortItem(MILK_ID)
-                                    .addStackCount(100)
-                                    .addBarterCost(BITCOIN_ID, 3)
-                                    .addBarterCost(SALEWA_ID, 1)
+        const BITCOIN_ID = "59faff1d86f7746c51718c9c";
+        this.fluentAssortCreator.createSingleAssortItem(LEDX_ID)
+                                    .addStackCount(1)
+                                    .addBarterCost(BITCOIN_ID, 2)
                                     .addLoyaltyLevel(1)
                                     .export(tables.traders[baseJson._id]);
 
