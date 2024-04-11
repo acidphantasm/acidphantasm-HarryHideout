@@ -1,2 +1,10 @@
-dist/acidphantasm-harryhideout.zip
-dist/src/mod.ts
+/dist
+/node_modules
+.buildignore
+.eslintignore
+.eslintrc.json
+.gitignore
+build.mjs
+mod.code-workspace
+package-lock.json
+tsconfig.json
