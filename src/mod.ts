@@ -100,14 +100,14 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
             {
                 if (HideoutHarry.config.useFleaPrices)
                     {
-                        let price = Math.round(priceTable[itemId] * HideoutHarry.config.itemPriceMultiplier);
+                        let price = (priceTable[itemId] * HideoutHarry.config.itemPriceMultiplier);
                         if (!price)
                             {
-                                price = Math.round((handbookTable.Items.find(x => x.Id === itemId)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier);
+                                price = (handbookTable.Items.find(x => x.Id === itemId)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
                             }
                         this.fluentAssortCreator.createSingleAssortItem(itemId)
                         .addUnlimitedStackCount()
-                        .addMoneyCost(Money.ROUBLES, price)
+                        .addMoneyCost(Money.ROUBLES, Math.round(price))
                         .addLoyaltyLevel(1)
                         .export(tables.traders[baseJson._id]);
                     }
@@ -116,7 +116,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     let price = itemIDs[itemId]
                     this.fluentAssortCreator.createSingleAssortItem(itemId)
                     .addUnlimitedStackCount()
-                    .addMoneyCost(Money.ROUBLES, price)
+                    .addMoneyCost(Money.ROUBLES, Math.round(price))
                     .addLoyaltyLevel(1)
                     .export(tables.traders[baseJson._id]);
                 }
