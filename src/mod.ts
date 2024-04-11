@@ -165,28 +165,28 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                 this.fluentAssortCreator.createSingleAssortItem(ledX)
                                             .addUnlimitedStackCount()
                                             .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, (priceTable[ledX] * HideoutHarry.config.itemPriceMultiplier))
+                                            .addMoneyCost(Money.ROUBLES, Math.round((priceTable[ledX] * HideoutHarry.config.itemPriceMultiplier)))
                                             .addLoyaltyLevel(1)
                                             .export(tables.traders[baseJson._id]);
                                  
                 this.fluentAssortCreator.createSingleAssortItem(currentConverter)
                                             .addUnlimitedStackCount()
                                             .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, (4216850 * HideoutHarry.config.itemPriceMultiplier))
+                                            .addMoneyCost(Money.ROUBLES, Math.round((4216850 * HideoutHarry.config.itemPriceMultiplier)))
                                             .addLoyaltyLevel(1)
                                             .export(tables.traders[baseJson._id]);
                                  
                 this.fluentAssortCreator.createSingleAssortItem(gpsAmplifier)
                                             .addUnlimitedStackCount()
                                             .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, (1917850 * HideoutHarry.config.itemPriceMultiplier))
+                                            .addMoneyCost(Money.ROUBLES, Math.round((1917850 * HideoutHarry.config.itemPriceMultiplier)))
                                             .addLoyaltyLevel(1)
                                             .export(tables.traders[baseJson._id]);
 
                 this.fluentAssortCreator.createSingleAssortItem(militaryBattery)
                                             .addUnlimitedStackCount()
                                             .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, (priceTable[militaryBattery] * HideoutHarry.config.itemPriceMultiplier))
+                                            .addMoneyCost(Money.ROUBLES, Math.round((priceTable[militaryBattery] * HideoutHarry.config.itemPriceMultiplier)))
                                             .addLoyaltyLevel(1)
                                             .export(tables.traders[baseJson._id]);
             }
