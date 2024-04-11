@@ -84,6 +84,18 @@ class SampleTrader implements IPreAkiLoadMod, IPostDBLoadMod
         // Add new trader to the trader dictionary in DatabaseServer - has no assorts (items) yet
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
 
+        this.fluentAssortCreator.createSingleAssortItem("569668774bdc2da2298b4568") // "euros"
+                                    .addUnlimitedStackCount()
+                                    .addMoneyCost(Money.ROUBLES, 2000)
+                                    .addLoyaltyLevel(1)
+                                    .export(tables.traders[baseJson._id]);
+
+        this.fluentAssortCreator.createSingleAssortItem("5696686a4bdc2da3298b456a") // "dollars"
+                                    .addUnlimitedStackCount()
+                                    .addMoneyCost(Money.ROUBLES, 2000)
+                                    .addLoyaltyLevel(1)
+                                    .export(tables.traders[baseJson._id]);
+
         this.fluentAssortCreator.createSingleAssortItem("57347b8b24597737dd42e192") // "classic matches"
                                     .addUnlimitedStackCount()
                                     .addMoneyCost(Money.ROUBLES, 2000)
@@ -271,6 +283,12 @@ class SampleTrader implements IPreAkiLoadMod, IPostDBLoadMod
                                     .export(tables.traders[baseJson._id]);
                             
         this.fluentAssortCreator.createSingleAssortItem("5b4335ba86f7744d2837a264") // bloodset
+                                    .addUnlimitedStackCount()
+                                    .addMoneyCost(Money.ROUBLES, 2000)
+                                    .addLoyaltyLevel(1)
+                                    .export(tables.traders[baseJson._id]);
+                                    
+        this.fluentAssortCreator.createSingleAssortItem("5e831507ea0a7c419c2f9bd9") // esmarch
                                     .addUnlimitedStackCount()
                                     .addMoneyCost(Money.ROUBLES, 2000)
                                     .addLoyaltyLevel(1)
