@@ -98,9 +98,9 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         const barterItems = itemList.barterItems;
 
         // Non-Barter Items Iteration
-        for (const eachItemID in nonBarterItems){
+        for (const item in nonBarterItems){
             {
-                let itemID = nonBarterItems[eachItemID].itemID;
+                let itemID = nonBarterItems[item].itemID;
                 if (HideoutHarry.config.useFleaPrices)
                     {
                         let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
@@ -119,7 +119,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     }
                 else  
                 {
-                    let price = nonBarterItems[eachItemID].price
+                    let price = nonBarterItems[item].price
                     this.fluentAssortCreator.createSingleAssortItem(itemID)
                     .addUnlimitedStackCount()
                     .addMoneyCost(Money.ROUBLES, Math.round(price))
@@ -133,11 +133,11 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         }
 
         // Barter Items Iteration
-        for (const eachItemID in barterItems){
+        for (const item in barterItems){
             {
-                let itemID = barterItems[eachItemID].itemID;
-                let barterItem = barterItems[eachItemID].barterItemID;
-                let barterAmount = barterItems[eachItemID].barterAmount;
+                let itemID = barterItems[item].itemID;
+                let barterItem = barterItems[item].barterItemID;
+                let barterAmount = barterItems[item].barterAmount;
                 if (HideoutHarry.config.useBarters)
                     {
                         let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
@@ -156,7 +156,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     }
                 else  
                 {
-                    let price = barterItems[eachItemID].price
+                    let price = barterItems[item].price
                     this.fluentAssortCreator.createSingleAssortItem(itemID)
                     .addUnlimitedStackCount()
                     .addMoneyCost(Money.ROUBLES, Math.round(price))
