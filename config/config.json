@@ -1,5 +1,7 @@
 {
-    "itemPriceMultiplier": 0.95,
+    "itemPriceMultiplier": 1,
     "useFleaPrices": true,
-    "useBarters": true
+    "useBarters": true,
+
+    "enableConsoleDebug": false
 }

@@ -85,7 +85,6 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         const configServer: ConfigServer = container.resolve<ConfigServer>("ConfigServer");
         const jsonUtil: JsonUtil = container.resolve<JsonUtil>("JsonUtil");
         const priceTable = databaseServer.getTables().templates.prices;
-        const itemTable = databaseServer.getTables().templates.items;
         const handbookTable = databaseServer.getTables().templates.handbook;
 
         // Get a reference to the database tables
@@ -94,104 +93,81 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         // Add new trader to the trader dictionary in DatabaseServer - has no assorts (items) yet
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
 
-        /// This section generates currency items for trader
-        const itemIDs = JSON.parse(fs.readFileSync(HideoutHarry.itemsPath, "utf-8"));
-        for (const itemId in itemIDs)
+        const itemList = JSON.parse(fs.readFileSync(HideoutHarry.itemsPath, "utf-8"));
+        const nonBarterItems = itemList.nonBarterItems;
+        const barterItems = itemList.barterItems;
+
+        // Non-Barter Items Iteration
+        for (const eachItemID in nonBarterItems){
             {
+                let itemID = nonBarterItems[eachItemID].itemID;
                 if (HideoutHarry.config.useFleaPrices)
                     {
-                        let price = (priceTable[itemId] * HideoutHarry.config.itemPriceMultiplier);
+                        let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
                         if (!price)
                             {
-                                price = (handbookTable.Items.find(x => x.Id === itemId)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
+                                price = (handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
                             }
-                        this.fluentAssortCreator.createSingleAssortItem(itemId)
+                        this.fluentAssortCreator.createSingleAssortItem(itemID)
                         .addUnlimitedStackCount()
                         .addMoneyCost(Money.ROUBLES, Math.round(price))
                         .addLoyaltyLevel(1)
-                        .export(tables.traders[baseJson._id]);
+                        .export(tables.traders[baseJson._id])
+                        if (HideoutHarry.config.enableConsoleDebug){
+                            logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
+                        }
                     }
                 else  
                 {
-                    let price = itemIDs[itemId]
-                    this.fluentAssortCreator.createSingleAssortItem(itemId)
+                    let price = nonBarterItems[eachItemID].price
+                    this.fluentAssortCreator.createSingleAssortItem(itemID)
                     .addUnlimitedStackCount()
                     .addMoneyCost(Money.ROUBLES, Math.round(price))
                     .addLoyaltyLevel(1)
                     .export(tables.traders[baseJson._id]);
+                    if (HideoutHarry.config.enableConsoleDebug){
+                        logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
+                    }
                 }
             }
+        }
 
-
-        /// This section generates barter/rouble for high end items for trader only
-
-        const ledX = "5c0530ee86f774697952d952"; // LEDX
-        const bitcoin = "59faff1d86f7746c51718c9c"; // Add 2x bitcoin as barter for LEDX
-        const currentConverter = "6389c85357baa773a825b356"; // current converter
-        const gpsAmplifier = "6389c7f115805221fb410466"; // GPS Amplifier
-        const militaryBattery = "5d03794386f77420415576f5"; // military battery
-
-        if (HideoutHarry.config.useBarters)
+        // Barter Items Iteration
+        for (const eachItemID in barterItems){
             {
-                this.fluentAssortCreator.createSingleAssortItem(ledX)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addBarterCost(bitcoin, 3)
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-                                 
-                this.fluentAssortCreator.createSingleAssortItem(currentConverter)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addBarterCost(bitcoin, 8)
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-                                 
-                this.fluentAssortCreator.createSingleAssortItem(gpsAmplifier)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addBarterCost(bitcoin, 4)
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-                this.fluentAssortCreator.createSingleAssortItem(militaryBattery)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addBarterCost(bitcoin, 1)
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
+                let itemID = barterItems[eachItemID].itemID;
+                let barterItem = barterItems[eachItemID].barterItemID;
+                let barterAmount = barterItems[eachItemID].barterAmount;
+                if (HideoutHarry.config.useBarters)
+                    {
+                        let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
+                        if (!price)
+                            {
+                                price = (handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
+                            }
+                        this.fluentAssortCreator.createSingleAssortItem(itemID)
+                        .addUnlimitedStackCount()
+                        .addBarterCost(barterItem, barterAmount)
+                        .addLoyaltyLevel(1)
+                        .export(tables.traders[baseJson._id])
+                        if (HideoutHarry.config.enableConsoleDebug){
+                            logger.log("ItemID: " + itemID + " for barter: " + barterAmount + " "+ barterItem, "cyan");
+                        }
+                    }
+                else  
+                {
+                    let price = barterItems[eachItemID].price
+                    this.fluentAssortCreator.createSingleAssortItem(itemID)
+                    .addUnlimitedStackCount()
+                    .addMoneyCost(Money.ROUBLES, Math.round(price))
+                    .addLoyaltyLevel(1)
+                    .export(tables.traders[baseJson._id]);
+                    if (HideoutHarry.config.enableConsoleDebug){
+                        logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
+                    }
+                }
             }
-            else 
-            {
-                this.fluentAssortCreator.createSingleAssortItem(ledX)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, Math.round((priceTable[ledX] * HideoutHarry.config.itemPriceMultiplier)))
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-                                 
-                this.fluentAssortCreator.createSingleAssortItem(currentConverter)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, Math.round((4216850 * HideoutHarry.config.itemPriceMultiplier)))
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-                                 
-                this.fluentAssortCreator.createSingleAssortItem(gpsAmplifier)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, Math.round((1917850 * HideoutHarry.config.itemPriceMultiplier)))
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-
-                this.fluentAssortCreator.createSingleAssortItem(militaryBattery)
-                                            .addUnlimitedStackCount()
-                                            .addBuyRestriction(1)
-                                            .addMoneyCost(Money.ROUBLES, Math.round((priceTable[militaryBattery] * HideoutHarry.config.itemPriceMultiplier)))
-                                            .addLoyaltyLevel(1)
-                                            .export(tables.traders[baseJson._id]);
-            }
-        
-
+        }
         // Add trader to locale file, ensures trader text shows properly on screen
         // WARNING: adds the same text to ALL locales (e.g. chinese/french/english)
         this.traderHelper.addTraderToLocales(baseJson, tables, baseJson.name, "Hideout Harry", baseJson.nickname, baseJson.location, "I'm sellin', what are you buyin'?");
@@ -205,6 +181,7 @@ interface Config
     useBarters: boolean,
     itemPriceMultiplier: number,
     useFleaPrices: boolean,
+    enableConsoleDebug: boolean,
 }
 
 module.exports = { mod: new HideoutHarry() }
