@@ -177,7 +177,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         this.logger.debug(`[${this.mod}] postDb Loaded`);
 
         const timeTaken = performance.now() - start;
-        logger.log(`[${this.mod}] Assort generation took ${timeTaken} milliseconds.`, "green");
+        logger.log(`[${this.mod}] Assort generation took ${timeTaken.toFixed(3)}ms.`, "green");
     }
 }
 
