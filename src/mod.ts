@@ -142,11 +142,6 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                 const barterAmount = barterItems[item].barterAmount;
                 if (HideoutHarry.config.useBarters)
                 {
-                    let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
-                    if (!price)
-                    {
-                        price = (handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
-                    }
                     this.fluentAssortCreator.createSingleAssortItem(itemID)
                         .addUnlimitedStackCount()
                         .addBarterCost(barterItem, barterAmount)
