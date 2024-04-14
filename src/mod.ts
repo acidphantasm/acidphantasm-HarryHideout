@@ -44,7 +44,6 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
     {
         // Get a logger
         this.logger = container.resolve<ILogger>("WinstonLogger");
-        this.logger.debug(`[${this.mod}] preAki Loading... `);
 
         // Get SPT code/data we need later
         const preAkiModLoader: PreAkiModLoader = container.resolve<PreAkiModLoader>("PreAkiModLoader");
@@ -65,8 +64,6 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
 
         // Add trader to flea market
         ragfairConfig.traders[baseJson._id] = true;
-
-        this.logger.debug(`[${this.mod}] preAki Loaded`);
     }
     
     /**
@@ -77,7 +74,6 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
     {
 
         HideoutHarry.config = JSON.parse(fs.readFileSync(HideoutHarry.configPath, "utf-8"));
-        this.logger.debug(`[${this.mod}] postDb Loading... `);
 
         // Resolve SPT classes we'll use
         const logger = container.resolve<ILogger>("WinstonLogger");
@@ -169,7 +165,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         // WARNING: adds the same text to ALL locales (e.g. chinese/french/english)
         this.traderHelper.addTraderToLocales(baseJson, tables, baseJson.name, "Hideout Harry", baseJson.nickname, baseJson.location, "I'm sellin', what are you buyin'?");
 
-        this.logger.debug(`[${this.mod}] postDb Loaded`);
+        this.logger.debug(`[${this.mod}] loaded... `);
 
         const timeTaken = performance.now() - start;
         logger.log(`[${this.mod}] Assort generation took ${timeTaken.toFixed(3)}ms.`, "green");
