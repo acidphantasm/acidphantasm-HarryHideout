@@ -34,7 +34,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
     private static configPath = path.resolve(__dirname, "../config/config.json");
 
     constructor() {
-        this.mod = "HarryHideout"; // Set name of mod so we can log it to console later
+        this.mod = "acidphantasm-harryhideout"; // Set name of mod so we can log it to console later
     }
     /**
      * Some work needs to be done prior to SPT code being loaded, registering the profile image + setting trader update time inside the trader config json
@@ -94,6 +94,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         const itemList = JSON.parse(fs.readFileSync(HideoutHarry.itemsPath, "utf-8"));
         const nonBarterItems = itemList.nonBarterItems;
         const barterItems = itemList.barterItems;
+        const lowFleaRange = 0.85;
 
         // Non-Barter Items Iteration
         for (const item in nonBarterItems){
@@ -108,7 +109,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     }
                     this.fluentAssortCreator.createSingleAssortItem(itemID)
                         .addUnlimitedStackCount()
-                        .addMoneyCost(Money.ROUBLES, Math.round(price))
+                        .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
                         .addLoyaltyLevel(1)
                         .export(tables.traders[baseJson._id])
                     if (HideoutHarry.config.enableConsoleDebug){
@@ -120,7 +121,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     const price = nonBarterItems[item].price
                     this.fluentAssortCreator.createSingleAssortItem(itemID)
                         .addUnlimitedStackCount()
-                        .addMoneyCost(Money.ROUBLES, Math.round(price))
+                        .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
                         .addLoyaltyLevel(1)
                         .export(tables.traders[baseJson._id]);
                     if (HideoutHarry.config.enableConsoleDebug){

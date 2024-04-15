@@ -281,10 +281,6 @@
             "price": 12000
         },
         {
-            "itemID": "5b4391a586f7745321235ab2",
-            "price": 850000
-        },
-        {
             "itemID": "5c06782b86f77426df5407d2",
             "price": 15000
         },
@@ -381,10 +377,6 @@
             "price": 325000
         },
         {
-            "itemID": "5b7c710788a4506dec015957",
-            "price": 1100000
-        },
-        {
             "itemID": "5bc9bc53d4351e00367fbcee",
             "price": 57000
         },
@@ -448,6 +440,18 @@
             "itemID": "5d03794386f77420415576f5",
             "price": 217169,
             "barterAmount": 1,
+            "barterItemID": "59faff1d86f7746c51718c9c"
+        },
+        {
+            "itemID": "5b4391a586f7745321235ab2",
+            "price": 37189,
+            "barterAmount": 3,
+            "barterItemID": "5991b51486f77447b112d44f"
+        },
+        {
+            "itemID": "5b7c710788a4506dec015957",
+            "price": 1081368,
+            "barterAmount": 2,
             "barterItemID": "59faff1d86f7746c51718c9c"
         }
     ]
