@@ -97,39 +97,39 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         const lowFleaRange = 0.85;
 
         // Non-Barter Items Iteration
-        for (const item in nonBarterItems){
+        for (const item in nonBarterItems)
+        {
+            const itemID = nonBarterItems[item].itemID;
+            if (HideoutHarry.config.useFleaPrices)
             {
-                const itemID = nonBarterItems[item].itemID;
-                if (HideoutHarry.config.useFleaPrices)
+                let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
+                if (!price)
                 {
-                    let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
-                    if (!price)
-                    {
-                        price = (handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
-                    }
-                    this.fluentAssortCreator.createSingleAssortItem(itemID)
-                        .addUnlimitedStackCount()
-                        .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
-                        .addLoyaltyLevel(1)
-                        .export(tables.traders[baseJson._id])
-                    if (HideoutHarry.config.enableConsoleDebug){
-                        logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
-                    }
+                    price = (handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
                 }
-                else  
-                {
-                    const price = nonBarterItems[item].price
-                    this.fluentAssortCreator.createSingleAssortItem(itemID)
-                        .addUnlimitedStackCount()
-                        .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
-                        .addLoyaltyLevel(1)
-                        .export(tables.traders[baseJson._id]);
-                    if (HideoutHarry.config.enableConsoleDebug){
-                        logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
-                    }
+                this.fluentAssortCreator.createSingleAssortItem(itemID)
+                    .addUnlimitedStackCount()
+                    .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
+                    .addLoyaltyLevel(1)
+                    .export(tables.traders[baseJson._id])
+                if (HideoutHarry.config.enableConsoleDebug){
+                    logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
+                }
+            }
+            else  
+            {
+                const price = nonBarterItems[item].price
+                this.fluentAssortCreator.createSingleAssortItem(itemID)
+                    .addUnlimitedStackCount()
+                    .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
+                    .addLoyaltyLevel(1)
+                    .export(tables.traders[baseJson._id]);
+                if (HideoutHarry.config.enableConsoleDebug){
+                    logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
                 }
             }
         }
+
 
         // Barter Items Iteration
         for (const item in barterItems){
