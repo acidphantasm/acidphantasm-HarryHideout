@@ -141,7 +141,6 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         const preSptModLoader: PreSptModLoader = container.resolve<PreSptModLoader>("PreSptModLoader");
         const logger = container.resolve<ILogger>("WinstonLogger");
         const databaseService: DatabaseService = container.resolve<DatabaseService>("DatabaseService");
-        const configServer: ConfigServer = container.resolve<ConfigServer>("ConfigServer");
         const jsonUtil: JsonUtil = container.resolve<JsonUtil>("JsonUtil");
         const priceTable = databaseService.getTables().templates.prices;
         const handbookTable = databaseService.getTables().templates.handbook;
@@ -151,13 +150,7 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
 
         // Add new trader to the trader dictionary in DatabaseService - has no assorts (items) yet
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
-        
         const start = performance.now();
-
-        const itemList = JSON.parse(fs.readFileSync(HideoutHarry.itemsPath, "utf-8"));
-        const nonBarterItems = itemList.nonBarterItems;
-        const barterItems = itemList.barterItems;
-        const lowFleaRange = 0.85;
 
         //Detect Realism (to ignore randomized settings)
         const realismCheck = preSptModLoader.getImportedModsNames().includes("SPT-Realism");
@@ -170,72 +163,63 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
             this.setRealismDetection(realismCheck);
         }
 
-        // Non-Barter Items Iteration
-        for (const item in nonBarterItems)
+        // Get hideoutItems Needed for upgrades
+        const hideoutBlacklist = 
+        [
+            "5449016a4bdc2d6f028b456f",
+            "5696686a4bdc2da3298b456a",
+            "569668774bdc2da2298b4568",
+            "5df8a72c86f77412640e2e83",
+            "5df8a6a186f77412640e2e80",
+            "5df8a77486f77412672a1e3f"
+        ]
+        const hideoutAreas = databaseService.getTables().hideout.areas;
+        const hideoutItems = [];
+        for (const item of hideoutAreas)
         {
-            const itemID = nonBarterItems[item].itemID;
-            if (HideoutHarry.config.useFleaPrices)
+            for (const stage in item.stages)
             {
-                let price = (priceTable[itemID] * HideoutHarry.config.itemPriceMultiplier);
-                if (!price)
-                {
-                    price = (handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * HideoutHarry.config.itemPriceMultiplier;
-                }
-                this.fluentAssortCreator.createSingleAssortItem(itemID)
-                    .addUnlimitedStackCount()
-                    .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
-                    .addLoyaltyLevel(1)
-                    .export(tables.traders[baseJson._id])
-                if (HideoutHarry.config.debugLogging){
-                    logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
-                }
-            }
-            else  
-            {
-                const price = nonBarterItems[item].price
-                this.fluentAssortCreator.createSingleAssortItem(itemID)
-                    .addUnlimitedStackCount()
-                    .addMoneyCost(Money.ROUBLES, Math.round(price * lowFleaRange))
-                    .addLoyaltyLevel(1)
-                    .export(tables.traders[baseJson._id]);
-                if (HideoutHarry.config.debugLogging){
-                    logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
-                }
+                for (const requirements of item.stages[stage].requirements)
+                    if (requirements?.templateId)
+                    {
+                        if (!hideoutItems.some(e => e === requirements.templateId) && !hideoutBlacklist.some(e => e === requirements.templateId))
+                        {
+                            hideoutItems.push(requirements.templateId);
+                        }
+                    }
             }
         }
 
+        // Iterate through newly created hideoutItems, set prices, and push to assort
+        const specialItems = 
+        [
+            "6389c7f115805221fb410466",
+            "6389c85357baa773a825b356"
+        ]
+        const priceReduction = 0.80;
 
-        // Barter Items Iteration
-        for (const item in barterItems){
+        for (const itemID of hideoutItems)
+        {
+            let price = (priceTable[itemID] * priceReduction)  * HideoutHarry.config.itemPriceMultiplier;
+            if (!price)
             {
-                const itemID = barterItems[item].itemID;
-                const barterItem = barterItems[item].barterItemID;
-                const barterAmount = barterItems[item].barterAmount;
-                if (HideoutHarry.config.useBarters)
-                {
-                    this.fluentAssortCreator.createSingleAssortItem(itemID)
-                        .addUnlimitedStackCount()
-                        .addBarterCost(barterItem, barterAmount)
-                        .addLoyaltyLevel(1)
-                        .export(tables.traders[baseJson._id])
-                    if (HideoutHarry.config.debugLogging){
-                        logger.log("ItemID: " + itemID + " for barter: " + barterAmount + " "+ barterItem, "cyan");
-                    }
-                }
-                else  
-                {
-                    const price = barterItems[item].price
-                    this.fluentAssortCreator.createSingleAssortItem(itemID)
-                        .addUnlimitedStackCount()
-                        .addMoneyCost(Money.ROUBLES, Math.round(price))
-                        .addLoyaltyLevel(1)
-                        .export(tables.traders[baseJson._id]);
-                    if (HideoutHarry.config.debugLogging){
-                        logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
-                    }
-                }
+                price = ((handbookTable.Items.find(x => x.Id === itemID)?.Price ?? 1) * priceReduction)  * HideoutHarry.config.itemPriceMultiplier;
+            }
+            if (specialItems.some(e => e === itemID))
+            {
+                price *= 10;
+            }
+            this.fluentAssortCreator.createSingleAssortItem(itemID)
+                .addUnlimitedStackCount()
+                .addMoneyCost(Money.ROUBLES, Math.round(price))
+                .addLoyaltyLevel(1)
+                .export(tables.traders[baseJson._id])
+            if (HideoutHarry.config.debugLogging){
+                logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
             }
         }
+        
+
         // Add trader to locale file, ensures trader text shows properly on screen
         // WARNING: adds the same text to ALL locales (e.g. chinese/french/english)
         this.traderHelper.addTraderToLocales(baseJson, tables, baseJson.name, "Hideout Harry", baseJson.nickname, baseJson.location, "I'm sellin', what are you buyin'?");

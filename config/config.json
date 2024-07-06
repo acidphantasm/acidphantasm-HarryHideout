@@ -1,7 +1,5 @@
 {
     "itemPriceMultiplier": 1,
-    "useFleaPrices": true,
-    "useBarters": false,
 
     "traderRefreshMin": 1800,
     "traderRefreshMax": 3600,
