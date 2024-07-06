@@ -103,7 +103,7 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
             [
                 {
                     url: "/client/items/prices/HarryHideout",
-                    action: (url, info, sessionId, output) => 
+                    action: async (url, info, sessionId, output) => 
                     {
                         const trader = databaseService.getTables().traders["HarryHideout"];
                         const assortItems = trader.assort.items;
