@@ -1,19 +1,19 @@
 import { DependencyContainer, container } from "tsyringe";
 
 // SPT types
-import { IPreAkiLoadMod } from "@spt-aki/models/external/IPreAkiLoadMod";
-import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
-import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import { PreAkiModLoader } from "@spt-aki/loaders/PreAkiModLoader";
-import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
-import { ImageRouter } from "@spt-aki/routers/ImageRouter";
-import { ConfigServer } from "@spt-aki/servers/ConfigServer";
-import { ConfigTypes } from "@spt-aki/models/enums/ConfigTypes";
-import { ITraderConfig } from "@spt-aki/models/spt/config/ITraderConfig";
-import { IRagfairConfig } from "@spt-aki/models/spt/config/IRagfairConfig";
-import type {DynamicRouterModService} from "@spt-aki/services/mod/dynamicRouter/DynamicRouterModService";
-import { RandomUtil } from "@spt-aki/utils/RandomUtil";
-import { JsonUtil } from "@spt-aki/utils/JsonUtil";
+import { IPreSptLoadMod } from "@spt/models/external/IPreSptLoadMod";
+import { IPostDBLoadMod } from "@spt/models/external/IPostDBLoadMod";
+import { ILogger } from "@spt/models/spt/utils/ILogger";
+import { PreSptModLoader } from "@spt/loaders/PreSptModLoader";
+import { DatabaseService } from "@spt/servers/DatabaseService";
+import { ImageRouter } from "@spt/routers/ImageRouter";
+import { ConfigServer } from "@spt/servers/ConfigServer";
+import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
+import { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
+import { IRagfairConfig } from "@spt/models/spt/config/IRagfairConfig";
+import { DynamicRouterModService } from "@spt/services/mod/dynamicRouter/DynamicRouterModService";
+import { RandomUtil } from "@spt/utils/RandomUtil";
+import { JsonUtil } from "@spt/utils/JsonUtil";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -21,13 +21,13 @@ import * as path from "node:path";
 import * as baseJson from "../db/base.json";
 import { TraderHelper } from "./traderHelpers";
 import { FluentAssortConstructor as FluentAssortCreator } from "./fluentTraderAssortCreator";
-import { Money } from "@spt-aki/models/enums/Money";
-import { Traders } from "@spt-aki/models/enums/Traders";
-import { HashUtil } from "@spt-aki/utils/HashUtil";
+import { Money } from "@spt/models/enums/Money";
+import { Traders } from "@spt/models/enums/Traders";
+import { HashUtil } from "@spt/utils/HashUtil";
 
 let realismDetected:boolean;
 
-class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
+class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
 {
     private mod: string
     private logger: ILogger
@@ -44,15 +44,15 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
      * Some work needs to be done prior to SPT code being loaded, registering the profile image + setting trader update time inside the trader config json
      * @param container Dependency container
      */
-    public preAkiLoad(container: DependencyContainer): void
+    public preSptLoad(container: DependencyContainer): void
     {
         // Get a logger
         this.logger = container.resolve<ILogger>("WinstonLogger");
 
         // Get SPT code/data we need later
-        const preAkiModLoader: PreAkiModLoader = container.resolve<PreAkiModLoader>("PreAkiModLoader");
+        const preSptModLoader: PreSptModLoader = container.resolve<PreSptModLoader>("PreSptModLoader");
         const imageRouter: ImageRouter = container.resolve<ImageRouter>("ImageRouter");
-        const databaseServer: DatabaseServer = container.resolve<DatabaseServer>("DatabaseServer");
+        const databaseService: DatabaseService = container.resolve<DatabaseService>("DatabaseService");
         const hashUtil: HashUtil = container.resolve<HashUtil>("HashUtil");
         const configServer = container.resolve<ConfigServer>("ConfigServer");
         const traderConfig: ITraderConfig = configServer.getConfig<ITraderConfig>(ConfigTypes.TRADER);
@@ -82,7 +82,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         // Create helper class and use it to register our traders image/icon + set its stock refresh time
         this.traderHelper = new TraderHelper();
         this.fluentAssortCreator = new FluentAssortCreator(hashUtil, this.logger);
-        this.traderHelper.registerProfileImage(baseJson, this.mod, preAkiModLoader, imageRouter, "harry.jpg");
+        this.traderHelper.registerProfileImage(baseJson, this.mod, preSptModLoader, imageRouter, "harry.jpg");
         this.traderHelper.setTraderUpdateTime(traderConfig, baseJson, minRefresh, maxRefresh);
 
         // Add trader to trader enum
@@ -105,7 +105,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     url: "/client/items/prices/HarryHideout",
                     action: (url, info, sessionId, output) => 
                     {
-                        const trader = databaseServer.getTables().traders["HarryHideout"];
+                        const trader = databaseService.getTables().traders["HarryHideout"];
                         const assortItems = trader.assort.items;
                         if (!realismDetected)
                         {
@@ -124,12 +124,12 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
                     }
                 }
             ],
-            "aki"
+            "spt"
         );
     }
     
     /**
-     * Majority of trader-related work occurs after the aki database has been loaded but prior to SPT code being run
+     * Majority of trader-related work occurs after the spt database has been loaded but prior to SPT code being run
      * @param container Dependency container
      */
     public postDBLoad(container: DependencyContainer): void
@@ -138,18 +138,18 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         HideoutHarry.config = JSON.parse(fs.readFileSync(HideoutHarry.configPath, "utf-8"));
 
         // Resolve SPT classes we'll use
-        const preAkiModLoader: PreAkiModLoader = container.resolve<PreAkiModLoader>("PreAkiModLoader");
+        const preSptModLoader: PreSptModLoader = container.resolve<PreSptModLoader>("PreSptModLoader");
         const logger = container.resolve<ILogger>("WinstonLogger");
-        const databaseServer: DatabaseServer = container.resolve<DatabaseServer>("DatabaseServer");
+        const databaseService: DatabaseService = container.resolve<DatabaseService>("DatabaseService");
         const configServer: ConfigServer = container.resolve<ConfigServer>("ConfigServer");
         const jsonUtil: JsonUtil = container.resolve<JsonUtil>("JsonUtil");
-        const priceTable = databaseServer.getTables().templates.prices;
-        const handbookTable = databaseServer.getTables().templates.handbook;
+        const priceTable = databaseService.getTables().templates.prices;
+        const handbookTable = databaseService.getTables().templates.handbook;
 
         // Get a reference to the database tables
-        const tables = databaseServer.getTables();
+        const tables = databaseService.getTables();
 
-        // Add new trader to the trader dictionary in DatabaseServer - has no assorts (items) yet
+        // Add new trader to the trader dictionary in DatabaseService - has no assorts (items) yet
         this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil);
         
         const start = performance.now();
@@ -160,7 +160,7 @@ class HideoutHarry implements IPreAkiLoadMod, IPostDBLoadMod
         const lowFleaRange = 0.85;
 
         //Detect Realism (to ignore randomized settings)
-        const realismCheck = preAkiModLoader.getImportedModsNames().includes("SPT-Realism");
+        const realismCheck = preSptModLoader.getImportedModsNames().includes("SPT-Realism");
         if (HideoutHarry.config.randomizeBuyRestriction || HideoutHarry.config.randomizeStockAvailable)
         {
             this.setRealismDetection(realismCheck);
