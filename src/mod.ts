@@ -196,7 +196,7 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
             "6389c7f115805221fb410466",
             "6389c85357baa773a825b356"
         ]
-        const priceReduction = 0.80;
+        const priceReduction = 0.9;
 
         for (const itemID of hideoutItems)
         {
