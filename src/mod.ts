@@ -102,10 +102,10 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
             "HarryHideoutRefreshStock",
             [
                 {
-                    url: "/client/items/prices/HarryHideout",
+                    url: "/client/items/prices/67419e9d0d4541ce671543bb",
                     action: async (url, info, sessionId, output) => 
                     {
-                        const trader = databaseService.getTables().traders["HarryHideout"];
+                        const trader = databaseService.getTables().traders["67419e9d0d4541ce671543bb"];
                         const assortItems = trader.assort.items;
                         if (!realismDetected)
                         {
@@ -196,7 +196,7 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
             "6389c7f115805221fb410466",
             "6389c85357baa773a825b356"
         ]
-        const priceReduction = 0.80;
+        const priceReduction = 0.9;
 
         for (const itemID of hideoutItems)
         {
