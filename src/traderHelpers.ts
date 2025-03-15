@@ -1,6 +1,6 @@
 import { PreSptModLoader } from "@spt/loaders/PreSptModLoader";
 import { ITraderBase, ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
-import { ITraderConfig, UpdateTime } from "@spt/models/spt/config/ITraderConfig";
+import { ITraderConfig, IUpdateTime } from "@spt/models/spt/config/ITraderConfig";
 import { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
 import { ImageRouter } from "@spt/routers/ImageRouter";
 import { JsonUtil } from "@spt/utils/JsonUtil";
@@ -18,7 +18,7 @@ export class TraderHelper
     {
         // Reference the mod "res" folder
         const imageFilepath = `./${preSptModLoader.getModPath(modName)}res`;
- 
+
         // Register a route to point to the profile picture - remember to remove the .jpg from it
         imageRouter.addRoute(baseJson.avatar.replace(".jpg", ""), `${imageFilepath}/${traderImageName}`);
     }
@@ -33,7 +33,7 @@ export class TraderHelper
     public setTraderUpdateTime(traderConfig: ITraderConfig, baseJson: any, refreshTimeSecondsMin: number, refreshTimeSecondsMax: number): void
     {
         // Add refresh time in seconds to config
-        const traderRefreshRecord: UpdateTime = {
+        const traderRefreshRecord: IUpdateTime = {
             traderId: baseJson._id,
             seconds: {
                 min: refreshTimeSecondsMin,
@@ -93,7 +93,7 @@ export class TraderHelper
      * @param location Location of trader (e.g. "Here in the cat shop")
      * @param description Description of trader
      */
-    public addTraderToLocales(baseJson: any, tables: IDatabaseTables, fullName: string, firstName: string, nickName: string, location: string, description: string)
+    public addTraderToLocales(baseJson: any, tables: IDatabaseTables, fullName: string, firstName: string, nickName: string, location: string, description: string): void
     {
         // For each language, add locale for the new trader
         const locales = Object.values(tables.locales.global) as Record<string, string>[];

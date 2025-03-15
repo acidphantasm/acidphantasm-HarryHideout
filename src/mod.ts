@@ -24,6 +24,7 @@ import { FluentAssortConstructor as FluentAssortCreator } from "./fluentTraderAs
 import { Money } from "@spt/models/enums/Money";
 import { Traders } from "@spt/models/enums/Traders";
 import { HashUtil } from "@spt/utils/HashUtil";
+import { CustomTradeHelper } from "./CustomTraderHelper";
 
 let realismDetected:boolean;
 
@@ -34,10 +35,10 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
     private traderHelper: TraderHelper
     private fluentAssortCreator: FluentAssortCreator
     private static config: Config;
-    private static itemsPath = path.resolve(__dirname, "../config/items.json");
     private static configPath = path.resolve(__dirname, "../config/config.json");
 
-    constructor() {
+    constructor() 
+    {
         this.mod = "acidphantasm-harryhideout"; // Set name of mod so we can log it to console later
     }
     /**
@@ -59,6 +60,9 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         const ragfairConfig = configServer.getConfig<IRagfairConfig>(ConfigTypes.RAGFAIR);
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
 
+        container.register<CustomTradeHelper>("CustomTradeHelper", CustomTradeHelper);
+        container.register("TradeHelper", { useToken: "CustomTradeHelper" });
+
         //Load config file before accessing it
         HideoutHarry.config = JSON.parse(fs.readFileSync(HideoutHarry.configPath, "utf-8"));
 
@@ -70,13 +74,13 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         {
             minRefresh = 1800;
             maxRefresh = 3600;
-            this.logger.error(`[${this.mod}] [Config Issue]  traderRefreshMin must be less than traderRefreshMax. Refresh timers have been reset to default.`);
+            this.logger.error(`[${this.mod}] [CONFIG]  traderRefreshMin must be less than traderRefreshMax. Refresh timers have been reset to default.`);
         }
         if (maxRefresh <= 2)
         {
             minRefresh = 1800;
             maxRefresh = 3600;
-            this.logger.error(`[${this.mod}] [Config Issue]  You set traderRefreshMax too low. Refresh timers have been reset to default.`);
+            this.logger.error(`[${this.mod}] [CONFIG]  You set traderRefreshMax too low. Refresh timers have been reset to default.`);
         }
 
         // Create helper class and use it to register our traders image/icon + set its stock refresh time
@@ -105,18 +109,21 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
                     url: "/client/items/prices/67419e9d0d4541ce671543bb",
                     action: async (url, info, sessionId, output) => 
                     {
-                        const trader = databaseService.getTables().traders["67419e9d0d4541ce671543bb"];
-                        const assortItems = trader.assort.items;
                         if (!realismDetected)
                         {
+                            const trader = databaseService.getTables().traders["67419e9d0d4541ce671543bb"];
+                            const assortItems = trader.assort.items;
+                            
                             if (HideoutHarry.config.randomizeBuyRestriction)
                             {
-                                if (HideoutHarry.config.debugLogging) {this.logger.info(`[${this.mod}] Refreshing HarryHideout Stock with Randomized Buy Restrictions.`);}
+                                if (HideoutHarry.config.debugLogging) this.logger.info(`[${this.mod}] Refreshing HarryHideout Stock with Randomized Buy Restrictions.`);
+
                                 this.randomizeBuyRestriction(assortItems);
                             }
                             if (HideoutHarry.config.randomizeStockAvailable)
                             {
-                                if (HideoutHarry.config.debugLogging) {this.logger.info(`[${this.mod}] Refreshing HarryHideout Stock with Randomized Stock Availability.`);}
+                                if (HideoutHarry.config.debugLogging) this.logger.info(`[${this.mod}] Refreshing HarryHideout Stock with Randomized Stock Availability.`);
+                                
                                 this.randomizeStockAvailable(assortItems);
                             }
                         }
@@ -214,9 +221,7 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
                 .addMoneyCost(Money.ROUBLES, Math.round(price))
                 .addLoyaltyLevel(1)
                 .export(tables.traders[baseJson._id])
-            if (HideoutHarry.config.debugLogging){
-                logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
-            }
+            if (HideoutHarry.config.debugLogging) logger.log("ItemID: " + itemID + " for price: " + Math.round(price), "cyan");
         }
         
 
@@ -224,18 +229,13 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         // WARNING: adds the same text to ALL locales (e.g. chinese/french/english)
         this.traderHelper.addTraderToLocales(baseJson, tables, baseJson.name, "Hideout Harry", baseJson.nickname, baseJson.location, "I'm sellin', what are you buyin'?");
 
-        this.logger.debug(`[${this.mod}] loaded... `);
-
         const timeTaken = performance.now() - start;
-        if (HideoutHarry.config.debugLogging) {logger.log(`[${this.mod}] Assort generation took ${timeTaken.toFixed(3)}ms.`, "green");}
+        if (HideoutHarry.config.debugLogging) logger.log(`[${this.mod}] Assort generation took ${timeTaken.toFixed(3)}ms.`, "green");
     }
     private setRealismDetection(i: boolean)
     {
         realismDetected = i;
-        if (realismDetected)
-        {
-            this.logger.log(`[${this.mod}] SPT-Realism detected, disabling randomizeBuyRestriction and/or randomizeStockAvailable:`, "yellow");
-        }
+        if (realismDetected && (HideoutHarry.config.randomizeBuyRestriction || HideoutHarry.config.randomizeStockAvailable)) this.logger.log(`[${this.mod}] SPT-Realism detected, disabling stock randomization config.`, "yellow");
     }    
     private randomizeBuyRestriction(assortItemTable)
     {
@@ -245,12 +245,11 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         {
             assortItemTable[item].upd.BuyRestrictionMax = 10
             const itemID = assortItemTable[item]._id;
-            const oldRestriction = assortItemTable[item].upd.BuyRestrictionMax;
-            const newRestriction = Math.round(randomUtil.randInt(1, (oldRestriction)));
+            const newRestriction = Math.round(randomUtil.randInt(1, 10));
             
             assortItemTable[item].upd.BuyRestrictionMax = newRestriction;
 
-            if (HideoutHarry.config.debugLogging) {this.logger.log(`[${this.mod}] Item: [${itemID}] Buy Restriction Changed to: [${newRestriction}]`, "cyan");}
+            if (HideoutHarry.config.debugLogging) this.logger.log(`[${this.mod}] Item: [${itemID}] Buy Restriction Changed to: [${newRestriction}]`, "cyan");
         }
     }
     private randomizeStockAvailable(assortItemTable)
@@ -270,16 +269,15 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
                 const itemID = assortItemTable[item]._id;
                 assortItemTable[item].upd.StackObjectsCount = 0;
 
-                if (HideoutHarry.config.debugLogging) {this.logger.log(`[${this.mod}] Item: [${itemID}] Marked out of stock`, "cyan");}
+                if (HideoutHarry.config.debugLogging) this.logger.log(`[${this.mod}] Item: [${itemID}] Marked out of stock`, "cyan");
             } 
             else
             {
                 const itemID = assortItemTable[item]._id;
-                const originalStock = assortItemTable[item].upd.StackObjectsCount;
-                const newStock = randomUtil.randInt(1, (originalStock));
+                const newStock = randomUtil.randInt(1, 25);
                 assortItemTable[item].upd.StackObjectsCount = newStock;
 
-                if (HideoutHarry.config.debugLogging) {this.logger.log(`[${this.mod}] Item: [${itemID}] Stock Count changed to: [${newStock}]`, "cyan");}
+                if (HideoutHarry.config.debugLogging) this.logger.log(`[${this.mod}] Item: [${itemID}] Stock Count changed to: [${newStock}]`, "cyan");
             }
         }
     }
