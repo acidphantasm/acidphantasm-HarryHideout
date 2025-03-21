@@ -25,6 +25,7 @@ import { Money } from "@spt/models/enums/Money";
 import { Traders } from "@spt/models/enums/Traders";
 import { HashUtil } from "@spt/utils/HashUtil";
 import { CustomTradeHelper } from "./CustomTraderHelper";
+import { RagfairOfferGenerator } from "@spt/generators/RagfairOfferGenerator";
 
 let realismDetected:boolean;
 
@@ -59,6 +60,7 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         const traderConfig: ITraderConfig = configServer.getConfig<ITraderConfig>(ConfigTypes.TRADER);
         const ragfairConfig = configServer.getConfig<IRagfairConfig>(ConfigTypes.RAGFAIR);
         const dynamicRouterModService = container.resolve<DynamicRouterModService>("DynamicRouterModService");
+        const ragfairOfferGenerator = container.resolve<RagfairOfferGenerator>("RagfairOfferGenerator");
 
         container.register<CustomTradeHelper>("CustomTradeHelper", CustomTradeHelper);
         container.register("TradeHelper", { useToken: "CustomTradeHelper" });
@@ -114,18 +116,23 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
                             const trader = databaseService.getTables().traders["67419e9d0d4541ce671543bb"];
                             const assortItems = trader.assort.items;
                             
+                            let updateFleaOffers = false;
                             if (HideoutHarry.config.randomizeBuyRestriction)
                             {
                                 if (HideoutHarry.config.debugLogging) this.logger.info(`[${this.mod}] Refreshing HarryHideout Stock with Randomized Buy Restrictions.`);
 
+                                updateFleaOffers = true;
                                 this.randomizeBuyRestriction(assortItems);
                             }
                             if (HideoutHarry.config.randomizeStockAvailable)
                             {
                                 if (HideoutHarry.config.debugLogging) this.logger.info(`[${this.mod}] Refreshing HarryHideout Stock with Randomized Stock Availability.`);
                                 
+                                updateFleaOffers = true;
                                 this.randomizeStockAvailable(assortItems);
                             }
+
+                            if (updateFleaOffers) ragfairOfferGenerator.generateFleaOffersForTrader("67419e9d0d4541ce671543bb");
                         }
                         return output;
                     }
@@ -217,7 +224,6 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
                 price *= 10;
             }
             this.fluentAssortCreator.createSingleAssortItem(itemID)
-                .addUnlimitedStackCount()
                 .addMoneyCost(Money.ROUBLES, Math.round(price))
                 .addLoyaltyLevel(1)
                 .export(tables.traders[baseJson._id])
@@ -257,23 +263,20 @@ class HideoutHarry implements IPreSptLoadMod, IPostDBLoadMod
         const randomUtil: RandomUtil = container.resolve<RandomUtil>("RandomUtil");
         for (const item in assortItemTable)
         {
-            if (assortItemTable[item].upd?.UnlimitedCount !== undefined)
-            {
-                assortItemTable[item].upd.UnlimitedCount = false;
-                assortItemTable[item].upd.StackObjectsCount = 25;
-            }
+            const itemID = assortItemTable[item]._id;
+            assortItemTable[item].upd.UnlimitedCount = false;
+            assortItemTable[item].upd.StackObjectsCount = 25;
+
             const outOfStockRoll = randomUtil.getChance100(HideoutHarry.config.outOfStockChance);
             
             if (outOfStockRoll)
             {
-                const itemID = assortItemTable[item]._id;
                 assortItemTable[item].upd.StackObjectsCount = 0;
 
                 if (HideoutHarry.config.debugLogging) this.logger.log(`[${this.mod}] Item: [${itemID}] Marked out of stock`, "cyan");
             } 
             else
             {
-                const itemID = assortItemTable[item]._id;
                 const newStock = randomUtil.randInt(1, 25);
                 assortItemTable[item].upd.StackObjectsCount = newStock;
 
